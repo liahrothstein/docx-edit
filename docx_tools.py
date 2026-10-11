@@ -50,11 +50,32 @@ def replace(path, old, new, out=None):
     doc.save(out or path)   # по умолчанию — в исходник, бэкапом служит git
     print(f"Заменено абзацев: {n} -> {out or path}")
 
+def text(path, start, end=None):
+    """Текст абзацев в диапазоне индексов [start, end)."""
+    doc = Document(path)
+    start, end = int(start), int(end) if end else int(start) + 1
+    for i, p in enumerate(doc.paragraphs[start:end], start=start):
+        if p.text.strip():
+            print(f"[{i}] {p.text}")
+
+def settext(path, index, new_text):
+    """Перезаписать абзац целиком (форматирование первого run сохраняется)."""
+    doc = Document(path)
+    p = doc.paragraphs[int(index)]
+    for r in p.runs:
+        r.text = ""
+    if p.runs: p.runs[0].text = new_text
+    else: p.add_run(new_text)
+    doc.save(path)
+    print(f"Абзац [{index}] переписан -> {path}")
+
 if __name__ == "__main__":
     cmd, path = sys.argv[1], sys.argv[2]
     if cmd == "outline": outline(path)
     elif cmd == "find":  find(path, sys.argv[3])
     elif cmd == "show":  show(path, sys.argv[3])
+    elif cmd == "text":    text(path, sys.argv[3], sys.argv[4] if len(sys.argv) > 4 else None)
+    elif cmd == "settext": settext(path, sys.argv[3], sys.argv[4])
     elif cmd == "replace":
         replace(path, sys.argv[3], sys.argv[4],
                 sys.argv[5] if len(sys.argv) > 5 else None)
