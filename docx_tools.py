@@ -1,5 +1,5 @@
 # docx_tools.py
-import sys, os
+import sys
 from docx import Document
 
 def outline(path):
@@ -16,13 +16,19 @@ def find(path, query):
         if query.lower() in p.text.lower():
             print(f"[{i}] {p.text[:150]}")
 
+def show(path, index):
+    doc = Document(path)
+    for r in doc.paragraphs[int(index)].runs:
+        fmt = " ".join(f for f, v in
+            [("bold", r.bold), ("italic", r.italic),
+             ("sub", r.font.subscript)] if v)
+        print(repr(r.text), fmt)
+
 def _replace_in_paragraph(p, old, new):
-    # 1) фраза целиком в одном run — форматирование сохраняется
     for r in p.runs:
         if old in r.text:
             r.text = r.text.replace(old, new)
             return True
-    # 2) фраза разбита по runs — пересобираем текст в первом run
     if old in p.text and p.runs:
         full = p.text.replace(old, new)
         for r in p.runs:
@@ -38,17 +44,17 @@ def replace(path, old, new, out=None):
         for row in t.rows:
             for cell in row.cells:
                 targets += cell.paragraphs
-    for s in doc.sections:                       # колонтитулы
+    for s in doc.sections:
         targets += s.header.paragraphs + s.footer.paragraphs
     n = sum(1 for p in targets if _replace_in_paragraph(p, old, new))
-    out = out or path
-    doc.save(out)
-    print(f"Заменено абзацев: {n} -> {out}")
+    doc.save(out or path)   # по умолчанию — в исходник, бэкапом служит git
+    print(f"Заменено абзацев: {n} -> {out or path}")
 
 if __name__ == "__main__":
     cmd, path = sys.argv[1], sys.argv[2]
     if cmd == "outline": outline(path)
     elif cmd == "find":  find(path, sys.argv[3])
+    elif cmd == "show":  show(path, sys.argv[3])
     elif cmd == "replace":
         replace(path, sys.argv[3], sys.argv[4],
                 sys.argv[5] if len(sys.argv) > 5 else None)
