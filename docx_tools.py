@@ -70,21 +70,17 @@ def settext(path, index, new_text):
     print(f"Абзац [{index}] переписан -> {path}")
 
 def setbody(path, index, new_text):
-    """Перезаписать тело абзаца, сохранив первый run (жирное «Ответ:»)."""
+    """Перезаписать тело абзаца, сохранив первый run (префикс типа 'Ответ:'
+    с его форматированием)."""
     doc = Document(path)
     p = doc.paragraphs[int(index)]
-    if not p.runs or "Ответ" not in p.runs[0].text:
-        print(f"[{index}] первый run не содержит 'Ответ' — пропуск, проверить show")
-        return
-    for r in p.runs[1:]:
+    if len(p.runs) < 2:
+        sys.exit(f"В абзаце [{index}] меньше двух runs — setbody неприменим")
+    p.runs[1].text = new_text
+    for r in p.runs[2:]:
         r.text = ""
-    sep = "" if p.runs[0].text.endswith((" ", "\u00A0")) else " "
-    if len(p.runs) > 1:
-        p.runs[1].text = sep + new_text
-    else:
-        p.add_run(sep + new_text)
     doc.save(path)
-    print(f"Тело абзаца [{index}] заменено -> {path}")
+    print(f"Тело абзаца [{index}] переписано, префикс сохранён -> {path}")
 
 if __name__ == "__main__":
     cmd, path = sys.argv[1], sys.argv[2]
