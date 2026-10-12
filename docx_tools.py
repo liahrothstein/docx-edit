@@ -76,7 +76,8 @@ def setbody(path, index, new_text):
     p = doc.paragraphs[int(index)]
     if len(p.runs) < 2:
         sys.exit(f"В абзаце [{index}] меньше двух runs — setbody неприменим")
-    p.runs[1].text = new_text
+    lead = " " if p.runs[1].text[:1] == " " else ""
+    p.runs[1].text = lead + new_text
     for r in p.runs[2:]:
         r.text = ""
     doc.save(path)
