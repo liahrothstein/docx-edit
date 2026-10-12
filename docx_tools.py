@@ -69,6 +69,23 @@ def settext(path, index, new_text):
     doc.save(path)
     print(f"Абзац [{index}] переписан -> {path}")
 
+def setbody(path, index, new_text):
+    """Перезаписать тело абзаца, сохранив первый run (жирное «Ответ:»)."""
+    doc = Document(path)
+    p = doc.paragraphs[int(index)]
+    if not p.runs or "Ответ" not in p.runs[0].text:
+        print(f"[{index}] первый run не содержит 'Ответ' — пропуск, проверить show")
+        return
+    for r in p.runs[1:]:
+        r.text = ""
+    sep = "" if p.runs[0].text.endswith((" ", "\u00A0")) else " "
+    if len(p.runs) > 1:
+        p.runs[1].text = sep + new_text
+    else:
+        p.add_run(sep + new_text)
+    doc.save(path)
+    print(f"Тело абзаца [{index}] заменено -> {path}")
+
 if __name__ == "__main__":
     cmd, path = sys.argv[1], sys.argv[2]
     if cmd == "outline": outline(path)
@@ -76,6 +93,7 @@ if __name__ == "__main__":
     elif cmd == "show":  show(path, sys.argv[3])
     elif cmd == "text":    text(path, sys.argv[3], sys.argv[4] if len(sys.argv) > 4 else None)
     elif cmd == "settext": settext(path, sys.argv[3], sys.argv[4])
+    elif cmd == "setbody": setbody(path, sys.argv[3], sys.argv[4])
     elif cmd == "replace":
         replace(path, sys.argv[3], sys.argv[4],
                 sys.argv[5] if len(sys.argv) > 5 else None)
